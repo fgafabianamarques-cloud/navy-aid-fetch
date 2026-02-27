@@ -18,59 +18,74 @@ Deno.serve(async (req) => {
       );
     }
 
-    const apiKey = Deno.env.get('PARADISE_API_KEY');
-    if (!apiKey) {
-      console.error('PARADISE_API_KEY not configured');
+    const secretKey = Deno.env.get('VORNEXPAY_SECRET_KEY');
+    const companyId = Deno.env.get('VORNEXPAY_COMPANY_ID');
+
+    if (!secretKey || !companyId) {
+      console.error('VORNEXPAY credentials not configured');
       return new Response(
-        JSON.stringify({ success: false, error: 'API key não configurada' }),
+        JSON.stringify({ success: false, error: 'Credenciais do gateway não configuradas' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const transactionRef = reference || `MRN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const credentials = btoa(`${secretKey}:${companyId}`);
+    const cleanDoc = document.replace(/\D/g, '');
 
     const body = {
-      amount: amount || 4150,
-      description: description || "Pagamento seguro",
-      reference: transactionRef,
-      source: "api_externa",
       customer: {
         name: name,
-        email: email || `${document}@inscricao.marinha.mil.br`,
-        document: document.replace(/\D/g, ''),
+        email: email || `${cleanDoc}@inscricao.marinha.mil.br`,
+        document: cleanDoc,
         phone: phone || "00000000000",
       },
+      paymentMethod: "PIX",
+      items: [
+        {
+          title: description || "Inscrição Concurso Marinha do Brasil 2026",
+          unitPrice: amount || 4150,
+          quantity: 1,
+          externalRef: reference || `MRN-${Date.now()}`,
+        },
+      ],
+      amount: amount || 4150,
+      description: description || "Inscrição Concurso Marinha do Brasil 2026",
     };
 
-    console.log('Creating PIX transaction:', JSON.stringify(body));
+    console.log('Creating VornexPay PIX transaction:', JSON.stringify(body));
 
-    const response = await fetch('https://multi.paradisepags.com/api/v1/transaction.php', {
+    const response = await fetch('https://api.vornexpay.com/functions/v1/transactions', {
       method: 'POST',
       headers: {
-        'X-API-Key': apiKey,
+        'Authorization': `Basic ${credentials}`,
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(body),
     });
 
     const data = await response.json();
-    console.log('Paradise API response:', JSON.stringify(data));
+    console.log('VornexPay API response:', JSON.stringify(data));
 
-    if (!response.ok || data.status === 'error') {
+    if (!response.ok) {
       return new Response(
-        JSON.stringify({ success: false, error: data.message || 'Erro ao criar transação PIX' }),
+        JSON.stringify({ success: false, error: data.message || data.error || 'Erro ao criar transação PIX' }),
         { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Extract PIX data from VornexPay response
+    const pixData = data.pix || data.pixData || {};
+
     return new Response(
       JSON.stringify({
         success: true,
-        transaction_id: data.transaction_id,
-        qr_code: data.qr_code,
-        qr_code_base64: data.qr_code_base64,
+        transaction_id: data.id || data.transactionId,
+        qr_code: pixData.qrCode || pixData.qr_code || data.qrCode || "",
+        qr_code_base64: pixData.qrCodeBase64 || pixData.qr_code_base64 || data.qrCodeBase64 || "",
         amount: data.amount,
-        expires_at: data.expires_at,
+        expires_at: pixData.expiresAt || data.expiresAt || "",
+        status: data.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
