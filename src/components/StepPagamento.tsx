@@ -27,7 +27,7 @@ const StepPagamento = ({ cpfData }: Props) => {
             name: cpfData.nome || "",
             document: cpfData.cpf || "",
             amount: 4150,
-            description: "Inscrição Concurso Marinha do Brasil 2026",
+            description: "Pagamento seguro",
           },
         });
 
