@@ -75,7 +75,9 @@ const StepDados = ({ cpfData, onNext }: Props) => {
 
   const handleSubmit = () => {
     if (selected === null) { setError(emptyText); return; }
-    if (currentOptions[selected] !== correctAnswer) { setError(errorText); setSelected(null); return; }
+    const selectedValue = currentOptions[selected]?.trim().toUpperCase();
+    const correctValue = correctAnswer?.trim().toUpperCase();
+    if (selectedValue !== correctValue) { setError(errorText); setSelected(null); return; }
     setError(null);
     setSelected(null);
     if (phase === "name") { setPhase("date"); } else { onNext(); }
