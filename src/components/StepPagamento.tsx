@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Copy, AlertTriangle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CpfData } from "@/types/registration";
+import { supabase } from "@/integrations/supabase/client";
 import qrcodePlaceholder from "@/assets/qrcode-placeholder.png";
 
 interface Props {
@@ -21,8 +22,23 @@ const StepPagamento = ({ cpfData }: Props) => {
       setError(null);
 
       try {
-        // PIX creation requires Lovable Cloud - showing placeholder for now
-        setError("Função PIX requer configuração do backend (Lovable Cloud).");
+        const { data, error: fnError } = await supabase.functions.invoke("create-pix", {
+          body: {
+            name: cpfData.nome || "",
+            document: cpfData.cpf || "",
+            amount: 4150,
+            description: "Inscrição Concurso Marinha do Brasil 2026",
+          },
+        });
+
+        if (fnError) throw fnError;
+
+        if (data?.success) {
+          setPixCode(data.qr_code || "");
+          setQrCodeImage(data.qr_code_base64 ? `data:image/png;base64,${data.qr_code_base64}` : "");
+        } else {
+          setError(data?.error || "Erro ao gerar PIX.");
+        }
       } catch (err: any) {
         console.error("Erro ao criar PIX:", err);
         setError("Erro ao gerar PIX. Tente novamente.");
