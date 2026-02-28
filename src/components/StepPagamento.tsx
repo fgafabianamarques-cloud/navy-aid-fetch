@@ -7,12 +7,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   cpfData: CpfData;
+  onApproved?: (transactionId: string) => void;
 }
 
-const StepPagamento = ({ cpfData }: Props) => {
+const StepPagamento = ({ cpfData, onApproved }: Props) => {
   const { toast } = useToast();
   const [pixCode, setPixCode] = useState("");
-  
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -38,19 +39,10 @@ const StepPagamento = ({ cpfData }: Props) => {
 
         if (data?.success) {
           setPixCode(data.qr_code || "");
+          setTransactionId(data.transaction_id || null);
           
           if (data.expires_at) {
             setExpiresAt(data.expires_at);
-          }
-
-          // Google Ads conversion tracking
-          if (typeof window !== "undefined" && (window as any).gtag) {
-            (window as any).gtag('event', 'conversion', {
-              'send_to': 'AW-17960420953/_L-HCLa1xYAcENmMmfRC',
-              'value': 1.0,
-              'currency': 'BRL',
-              'transaction_id': data.transaction_id || '',
-            });
           }
         } else {
           setError(data?.error || "Erro ao gerar PIX.");
@@ -82,6 +74,29 @@ const StepPagamento = ({ cpfData }: Props) => {
     const interval = setInterval(calcTimeLeft, 1000);
     return () => clearInterval(interval);
   }, [expiresAt]);
+
+  // Polling para verificar status do pagamento
+  useEffect(() => {
+    if (!transactionId || expired) return;
+
+    const checkStatus = async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-pix-status", {
+          body: { transaction_id: transactionId },
+        });
+
+        if (data?.success && data.status === "approved") {
+          onApproved?.(String(transactionId));
+        }
+      } catch (err) {
+        console.error("Erro ao verificar status:", err);
+      }
+    };
+
+    const interval = setInterval(checkStatus, 5000);
+    checkStatus();
+    return () => clearInterval(interval);
+  }, [transactionId, expired, onApproved]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, "0");
