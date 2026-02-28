@@ -10,12 +10,14 @@ import StepFormulario from "@/components/StepFormulario";
 import StepAgendamento from "@/components/StepAgendamento";
 import StepConfirmacao from "@/components/StepConfirmacao";
 import StepPagamento from "@/components/StepPagamento";
+import StepPagamentoAprovado from "@/components/StepPagamentoAprovado";
 import type { CpfData } from "@/types/registration";
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [cpfData, setCpfData] = useState<CpfData | null>(null);
   const [enderecoUf, setEnderecoUf] = useState("");
+  const [approvedTransactionId, setApprovedTransactionId] = useState<string | null>(null);
 
   useEffect(() => {
     let meta = document.querySelector('meta[name="robots"]');
@@ -69,7 +71,10 @@ const Index = () => {
           <StepConfirmacao cpfData={cpfData} onNext={() => goTo(7)} />
         )}
         {currentStep === 7 && cpfData && (
-          <StepPagamento cpfData={cpfData} />
+          <StepPagamento cpfData={cpfData} onApproved={(tid) => { setApprovedTransactionId(tid); goTo(8); }} />
+        )}
+        {currentStep === 8 && cpfData && approvedTransactionId && (
+          <StepPagamentoAprovado cpfData={cpfData} transactionId={approvedTransactionId} />
         )}
       </div>
 
