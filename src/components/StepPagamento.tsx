@@ -42,6 +42,16 @@ const StepPagamento = ({ cpfData }: Props) => {
           if (data.expires_at) {
             setExpiresAt(data.expires_at);
           }
+
+          // Google Ads conversion tracking
+          if (typeof window !== "undefined" && (window as any).gtag) {
+            (window as any).gtag('event', 'conversion', {
+              'send_to': 'AW-17960420953/_L-HCLa1xYAcENmMmfRC',
+              'value': 1.0,
+              'currency': 'BRL',
+              'transaction_id': data.transaction_id || '',
+            });
+          }
         } else {
           setError(data?.error || "Erro ao gerar PIX.");
         }
