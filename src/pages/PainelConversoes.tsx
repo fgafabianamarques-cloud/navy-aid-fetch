@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
-import { BarChart3, RefreshCw, ArrowLeft } from "lucide-react";
+import { BarChart3, RefreshCw, ArrowLeft, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+
+const PANEL_PASSWORD = "marinha2026admin";
 
 interface Conversion {
   id: string;
@@ -16,6 +18,11 @@ interface Conversion {
 
 const PainelConversoes = () => {
   const navigate = useNavigate();
+  const [authenticated, setAuthenticated] = useState(() => {
+    return sessionStorage.getItem("painel_auth") === "true";
+  });
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState(false);
   const [conversions, setConversions] = useState<Conversion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,6 +57,50 @@ const PainelConversoes = () => {
     if (!cpf) return "—";
     return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.***-$4");
   };
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === PANEL_PASSWORD) {
+      setAuthenticated(true);
+      sessionStorage.setItem("painel_auth", "true");
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  if (!authenticated) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="bg-card border border-border rounded-lg p-8 w-full max-w-sm text-center">
+          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-1">Acesso Restrito</h2>
+          <p className="text-sm text-muted-foreground mb-6">Digite a senha para acessar o painel.</p>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setAuthError(false); }}
+              placeholder="Senha"
+              className="w-full px-4 py-2.5 border border-border rounded-md bg-background text-foreground text-sm outline-none focus:ring-2 focus:ring-navy"
+              autoFocus
+            />
+            {authError && (
+              <p className="text-sm text-destructive">Senha incorreta.</p>
+            )}
+            <button
+              type="submit"
+              className="w-full py-2.5 bg-navy text-primary-foreground font-bold rounded-md text-sm hover:opacity-90 transition-opacity"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
