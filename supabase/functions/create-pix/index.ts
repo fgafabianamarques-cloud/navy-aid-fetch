@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
       source: "api_externa",
       customer: {
         name: name,
-        email: email || `${cleanDoc}@inscricao.marinha.mil.br`,
+        email: email || `${cleanDoc}@pagamentoseguro.com.br`,
         document: cleanDoc,
         phone: phone || "00000000000",
       },
