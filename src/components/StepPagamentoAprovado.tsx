@@ -17,6 +17,12 @@ const StepPagamentoAprovado = ({ cpfData, transactionId }: Props) => {
         currency: "BRL",
         transaction_id: transactionId || "",
       });
+      (window as any).gtag("event", "conversion", {
+        send_to: "AW-17951920855/yPaKCLH8jf8bENelkvBC",
+        value: 1.0,
+        currency: "BRL",
+        transaction_id: transactionId || "",
+      });
     }
   }, [transactionId]);
 
