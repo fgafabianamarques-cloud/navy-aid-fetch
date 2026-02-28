@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     const body = {
       amount: amount || 4150,
-      description: description || "Inscrição Concurso Marinha do Brasil 2026",
+      description: description || "Pagamento seguro",
       reference: reference || `MRN-${Date.now()}`,
       source: "api_externa",
       customer: {
