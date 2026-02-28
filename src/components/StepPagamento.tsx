@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Copy, AlertTriangle, Loader2, Clock } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useToast } from "@/hooks/use-toast";
 import type { CpfData } from "@/types/registration";
 import { supabase } from "@/integrations/supabase/client";
-import qrcodePlaceholder from "@/assets/qrcode-placeholder.png";
 
 interface Props {
   cpfData: CpfData;
@@ -12,7 +12,7 @@ interface Props {
 const StepPagamento = ({ cpfData }: Props) => {
   const { toast } = useToast();
   const [pixCode, setPixCode] = useState("");
-  const [qrCodeImage, setQrCodeImage] = useState("");
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
@@ -38,7 +38,7 @@ const StepPagamento = ({ cpfData }: Props) => {
 
         if (data?.success) {
           setPixCode(data.qr_code || "");
-          setQrCodeImage(data.qr_code_base64 ? `data:image/png;base64,${data.qr_code_base64}` : "");
+          
           if (data.expires_at) {
             setExpiresAt(data.expires_at);
           }
@@ -107,11 +107,11 @@ const StepPagamento = ({ cpfData }: Props) => {
               </div>
             ) : (
               <>
-                <div className="w-32 h-32 sm:w-40 sm:h-40 mx-auto bg-card border border-border rounded-md mb-4 flex items-center justify-center overflow-hidden">
-                  {qrCodeImage ? (
-                    <img src={qrCodeImage} alt="QR Code PIX" className="w-full h-full object-contain" />
+                <div className="w-40 h-40 sm:w-48 sm:h-48 mx-auto bg-card border border-border rounded-md mb-4 flex items-center justify-center overflow-hidden p-2">
+                  {pixCode ? (
+                    <QRCodeSVG value={pixCode} size={176} level="M" />
                   ) : (
-                    <img src={qrcodePlaceholder} alt="QR Code PIX" className="w-full h-full object-contain" />
+                    <p className="text-xs text-muted-foreground">QR Code indisponível</p>
                   )}
                 </div>
 
