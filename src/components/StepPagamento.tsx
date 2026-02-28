@@ -56,6 +56,29 @@ const StepPagamento = ({ cpfData }: Props) => {
     createPix();
   }, [cpfData]);
 
+  // Timer de expiração
+  useEffect(() => {
+    if (!expiresAt) return;
+
+    const calcTimeLeft = () => {
+      const now = new Date().getTime();
+      const expiry = new Date(expiresAt).getTime();
+      const diff = Math.max(0, Math.floor((expiry - now) / 1000));
+      setTimeLeft(diff);
+      if (diff <= 0) setExpired(true);
+    };
+
+    calcTimeLeft();
+    const interval = setInterval(calcTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
+
   const handleCopy = () => {
     if (!pixCode) return;
     navigator.clipboard.writeText(pixCode).then(() => {
@@ -91,7 +114,20 @@ const StepPagamento = ({ cpfData }: Props) => {
           </div>
 
           <div className="p-4 sm:p-6 bg-muted/50 text-center">
-            <h4 className="text-sm sm:text-base font-bold text-navy mb-4">Escaneie o QR Code PIX</h4>
+            <h4 className="text-sm sm:text-base font-bold text-navy mb-2">Escaneie o QR Code PIX</h4>
+
+            {timeLeft !== null && !loading && !error && (
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-sm font-semibold ${
+                expired
+                  ? "bg-destructive/10 text-destructive"
+                  : timeLeft <= 120
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-emerald-100 text-emerald-800"
+              }`}>
+                <Clock className="w-4 h-4" />
+                {expired ? "PIX expirado — gere um novo código" : `Expira em ${formatTime(timeLeft)}`}
+              </div>
+            )}
 
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10 gap-3">
@@ -103,6 +139,14 @@ const StepPagamento = ({ cpfData }: Props) => {
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <AlertTriangle className="w-5 h-5 text-destructive" />
                   <p className="text-sm text-destructive font-semibold">{error}</p>
+                </div>
+              </div>
+            ) : expired ? (
+              <div className="py-6">
+                <div className="flex flex-col items-center gap-3">
+                  <AlertTriangle className="w-8 h-8 text-destructive" />
+                  <p className="text-sm text-destructive font-semibold">Este código PIX expirou.</p>
+                  <p className="text-xs text-muted-foreground">Recarregue a página para gerar um novo código.</p>
                 </div>
               </div>
             ) : (
