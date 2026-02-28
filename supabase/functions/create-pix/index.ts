@@ -81,10 +81,10 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         transaction_id: data.id || data.transactionId,
-        qr_code: pixData.qrCode || pixData.qr_code || data.qrCode || "",
-        qr_code_base64: pixData.qrCodeBase64 || pixData.qr_code_base64 || data.qrCodeBase64 || "",
+        qr_code: pixData.qrcode || pixData.qrCode || pixData.qr_code || data.qrCode || "",
+        qr_code_base64: pixData.qrcodeBase64 || pixData.qrCodeBase64 || pixData.qr_code_base64 || data.qrCodeBase64 || "",
         amount: data.amount,
-        expires_at: pixData.expiresAt || data.expiresAt || "",
+        expires_at: pixData.expirationDate || pixData.expiresAt || data.expiresAt || "",
         status: data.status,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
