@@ -1,30 +1,44 @@
 import { useEffect } from "react";
 import { CheckCircle } from "lucide-react";
 import type { CpfData } from "@/types/registration";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   cpfData: CpfData;
   transactionId: string;
 }
 
+const TAGS = [
+  { id: "AW-17960420953/_L-HCLa1xYAcENmMmfRC", label: "Tag 1 (AW-17960420953)" },
+  { id: "AW-17951920855/yPaKCLH8jf8bENelkvBC", label: "Tag 2 (AW-17951920855)" },
+];
+
 const StepPagamentoAprovado = ({ cpfData, transactionId }: Props) => {
   useEffect(() => {
-    // Google Ads conversion tracking
-    if (typeof window !== "undefined" && (window as any).gtag) {
-      (window as any).gtag("event", "conversion", {
-        send_to: "AW-17960420953/_L-HCLa1xYAcENmMmfRC",
-        value: 1.0,
-        currency: "BRL",
-        transaction_id: transactionId || "",
-      });
-      (window as any).gtag("event", "conversion", {
-        send_to: "AW-17951920855/yPaKCLH8jf8bENelkvBC",
-        value: 1.0,
-        currency: "BRL",
-        transaction_id: transactionId || "",
-      });
-    }
-  }, [transactionId]);
+    // Google Ads conversion tracking + log to database
+    TAGS.forEach((tag) => {
+      if (typeof window !== "undefined" && (window as any).gtag) {
+        (window as any).gtag("event", "conversion", {
+          send_to: tag.id,
+          value: 1.0,
+          currency: "BRL",
+          transaction_id: transactionId || "",
+        });
+      }
+
+      // Log conversion to database
+      supabase.functions.invoke("log-conversion", {
+        body: {
+          tag_id: tag.id,
+          tag_label: tag.label,
+          transaction_id: transactionId,
+          customer_name: cpfData.nome || null,
+          customer_cpf: cpfData.cpf || null,
+          amount: 4150,
+        },
+      }).catch((err) => console.error("Error logging conversion:", err));
+    });
+  }, [transactionId, cpfData]);
 
   return (
     <div className="min-h-screen bg-background">
