@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Copy, AlertTriangle, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Copy, AlertTriangle, Loader2, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { CpfData } from "@/types/registration";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,9 @@ const StepPagamento = ({ cpfData }: Props) => {
   const [qrCodeImage, setQrCodeImage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
     const createPix = async () => {
@@ -36,6 +39,9 @@ const StepPagamento = ({ cpfData }: Props) => {
         if (data?.success) {
           setPixCode(data.qr_code || "");
           setQrCodeImage(data.qr_code_base64 ? `data:image/png;base64,${data.qr_code_base64}` : "");
+          if (data.expires_at) {
+            setExpiresAt(data.expires_at);
+          }
         } else {
           setError(data?.error || "Erro ao gerar PIX.");
         }
